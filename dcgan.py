@@ -1,5 +1,7 @@
 
+#os.chdir('c:/users/2017B221/desktop/othermodel/dcgan')
 import glob
+#from __future__ import print_function, division
 from keras.layers import Input, Dense, Reshape, Flatten, Activation, Dropout
 from keras.layers import BatchNormalization, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
@@ -88,7 +90,9 @@ class DCGAN():
         model.add(BatchNormalization(momentum=0.8))
     
         model.add(Conv2DTranspose(3,kernel_size=5,strides=2,activation='tanh', padding="same"))
-      
+#        model.add(BatchNormalization(momentum=0.8))
+##
+#        model.add(Conv2D(3, kernel_size=5, activation='tanh', padding="same"))       
         model.summary()
         
         noise = Input(shape=noise_shape)
@@ -131,9 +135,9 @@ class DCGAN():
         impath=glob.glob('./celeb_sub/*')
 
 #        img_shape = (len(impath)*4,120,96,3)
-        img_shape = (len(impath)*4,self.img_rows, self.img_cols, self.channels)
+        img_shape = (len(impath)*8,self.img_rows, self.img_cols, self.channels)
         img_list=np.empty(img_shape)
-    
+
         for i in range(int(len(impath))) :
             img=cv2.imread(impath[i])
             img = cv2.resize(img, (96, 120))
@@ -152,10 +156,35 @@ class DCGAN():
             img_aug2 = cv2.resize(imp_tmp, (96, 120))
             img_aug3 = cv2.flip(img_aug2, 1)
             
-            img_list[4*i]=img
-            img_list[4*i+1]=img_aug1
-            img_list[4*i+2]=img_aug2
-            img_list[4*i+3]=img_aug3
+            #
+            
+            ratio1=0.05
+            ratio2=0.1
+            row_cutoff=round((img_row*ratio1/2))
+            col_cutoff=round((img_col*ratio2/2))
+            imp_tmp=img[row_cutoff:img_row-row_cutoff,col_cutoff : img_col-col_cutoff ,0:3]
+
+            img_aug4 = cv2.resize(imp_tmp, (96, 120))
+            img_aug5 = cv2.flip(img_aug4, 1)            
+            
+            ratio1=0.1
+            ratio2=0.05
+            row_cutoff=round((img_row*ratio1/2))
+            col_cutoff=round((img_col*ratio2/2))
+            imp_tmp=img[row_cutoff:img_row-row_cutoff,col_cutoff : img_col-col_cutoff ,0:3]
+
+            img_aug6 = cv2.resize(imp_tmp, (96, 120))
+            img_aug7 = cv2.flip(img_aug6, 1)             
+            
+            
+            img_list[8*i]=img
+            img_list[8*i+1]=img_aug1
+            img_list[8*i+2]=img_aug2
+            img_list[8*i+3]=img_aug3
+            img_list[8*i+4]=img_aug4
+            img_list[8*i+5]=img_aug5
+            img_list[8*i+6]=img_aug6
+            img_list[8*i+7]=img_aug7
             print(i)
 
         np.random.shuffle(img_list)
@@ -194,6 +223,10 @@ class DCGAN():
             # Generate a half batch of new images
             gen_imgs = self.generator.predict(noise)
             # Train the discriminator
+#            d_loss_real = self.discriminator.train_on_batch(imgs, -np.ones((half_batch, 1)))
+#            d_loss_fake = self.discriminator.train_on_batch(gen_imgs, np.ones((half_batch, 1)))
+#            d_loss = 0.5 * np.add(d_loss_fake, d_loss_real)
+
             labels_rf= np.array([[0]*half_batch,[1]*half_batch]).reshape(-1,)
             ImgForTrain=np.concatenate((gen_imgs, imgs))
             d_loss = self.discriminator.train_on_batch(ImgForTrain, labels_rf)            
@@ -235,7 +268,7 @@ class DCGAN():
                 k+=1
 #        cv2.imsave('images/mnist_%d.png',figure[...,[2,1,0]])
         ep=str(epoch).zfill(15)
-        plt.imsave('./dcgan_images2/celeb_{}.png'.format(ep),figure[...,[2,1,0]])
+        plt.imsave('./dcgan_images/celeb_{}.png'.format(ep),figure[...,[2,1,0]])
         
         #fig.suptitle("DCGAN: Generated digits", fontsize=12)
 
